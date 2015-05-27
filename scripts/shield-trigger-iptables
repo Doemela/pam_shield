@@ -41,7 +41,7 @@ run_iptables() {
 		if [ -z "$CHAIN_TEST" ]
 		then
 			"$IPT" -N pam_shield
-			"$IPT" -I pam_shield -j DROP
+			"$IPT" -A INPUT -p tcp -m tcp -j pam_shield
 		fi
 		TASK="-I"
 	else
@@ -61,7 +61,7 @@ run_iptables() {
 #	* add additional rules for additional services as needed
 #
 
-	"$IPT" "$TASK" INPUT -p tcp -s "$2" -j pam_shield
+	"$IPT" "$TASK" pam_shield -p tcp -s "$2" -j DROP
 
 #	mail -s "[security] pam_shield blocked $2" root <<EOF
 #Another monkey kept off our backs ...
