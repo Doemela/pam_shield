@@ -48,18 +48,6 @@ run_iptables() {
 		TASK="-D"
 	fi
 
-#	check to see if pam_shield chain exists and create if necessary
-	if [ "$TASK" == "-I" ]
-	then
-		CHAIN_TEST=`$IPT -L pam_shield 2>/dev/null`
-		if [ -z "$CHAIN_TEST" ]
-		then
-			"$IPT" -N pam_shield
-			"$IPT" -I pam_shield -j DROP
-		fi
-	fi
-
-#
 #	CUSTOMIZE THIS RULE if you want to
 #
 #	$TASK is the iptables command: -A/-I or -D
