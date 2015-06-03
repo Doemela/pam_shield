@@ -36,18 +36,50 @@ run_iptables() {
 #	switch -A for iptables to -I
 	if [ "$1" != "-D" ]
 	then
-#	check to see if pam_shield chain exists and create if necessary	
-		CHAIN_TEST=`$IPT -n -L pam_shield 2>/dev/null`
+#	check to see if pam_shield chain exists and create if necessary
+		CHAIN_TEST=`$IPT -n -L pam_shield_INPUT 2>/dev/null`
 		if [ -z "$CHAIN_TEST" ]
 		then
-			"$IPT" -N pam_shield
-			"$IPT" -A INPUT -p tcp -m tcp -j pam_shield
+			"$IPT" -N pam_shield_INPUT
+			"$IPT" -I INPUT -j pam_shield_INPUT
+		fi
+		CHAIN_TEST_F=`$IPT -n -L pam_shield_FORWARD 2>/dev/null`
+		if [ -z "$CHAIN_TEST_F" ]
+		then
+			"$IPT" -N pam_shield_FORWARD
+			"$IPT" -I FORWARD -j pam_shield_FORWARD
+		fi
+		CHAIN_TEST_O=`$IPT -n -L pam_shield_OUTPUT 2>/dev/null`
+		if [ -z "$CHAIN_TEST_O" ]
+		then
+			"$IPT" -N pam_shield_OUTPUT
+			"$IPT" -I OUTPUT -j pam_shield_OUTPUT
 		fi
 		TASK="-I"
+#	check to see if pam_shield chain exists and create if necessary
+		CHAIN_TEST=`$IPT -n -L pam_shield_INPUT 2>/dev/null`
+		if [ -z "$CHAIN_TEST" ]
+		then
+			"$IPT" -N pam_shield_INPUT
+			"$IPT" -I INPUT -j pam_shield_INPUT
+		fi
+		CHAIN_TEST_F=`$IPT -n -L pam_shield_FORWARD 2>/dev/null`
+		if [ -z "$CHAIN_TEST_F" ]
+		then
+			"$IPT" -N pam_shield_FORWARD
+			"$IPT" -I FORWARD -j pam_shield_FORWARD
+		fi
+		CHAIN_TEST_O=`$IPT -n -L pam_shield_OUTPUT 2>/dev/null`
+		if [ -z "$CHAIN_TEST_O" ]
+		then
+			"$IPT" -N pam_shield_OUTPUT
+			"$IPT" -I OUTPUT -j pam_shield_OUTPUT
+		fi
 	else
 		TASK="-D"
 	fi
 
+#
 #	CUSTOMIZE THIS RULE if you want to
 #
 #	$TASK is the iptables command: -A/-I or -D
@@ -61,7 +93,10 @@ run_iptables() {
 #	* add additional rules for additional services as needed
 #
 
-	"$IPT" "$TASK" pam_shield -p tcp -s "$2" -j DROP
+	"$IPT" "$TASK" pam_shield_INPUT -s "$2" -j DROP
+	"$IPT" "$TASK" pam_shield_FORWARD -s "$2" -j DROP
+	"$IPT" "$TASK" pam_shield_FORWARD -d "$2" -j DROP
+	"$IPT" "$TASK" pam_shield_OUTPUT -d "$2" -j DROP
 
 #	mail -s "[security] pam_shield blocked $2" root <<EOF
 #Another monkey kept off our backs ...
