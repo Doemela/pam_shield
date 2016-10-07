@@ -34,7 +34,14 @@ run_iptables() {
 	fi
 
 #	switch -A for iptables to -I
-	if [ "$1" != "-D" ]
+	if [ "$1" = "-A" ]
+	then
+		TASK="-I"
+	else
+		TASK="-D"
+	fi
+
+    if [ "$TASK" = "-I" ]
 	then
 #	check to see if pam_shield chain exists and create if necessary
 		CHAIN_TEST=`$IPT -n -L pam_shield_INPUT 2>/dev/null`
@@ -55,29 +62,37 @@ run_iptables() {
 			"$IPT" -N pam_shield_OUTPUT
 			"$IPT" -I OUTPUT -j pam_shield_OUTPUT
 		fi
-		TASK="-I"
-#	check to see if pam_shield chain exists and create if necessary
-		CHAIN_TEST=`$IPT -n -L pam_shield_INPUT 2>/dev/null`
-		if [ -z "$CHAIN_TEST" ]
-		then
-			"$IPT" -N pam_shield_INPUT
-			"$IPT" -I INPUT -j pam_shield_INPUT
-		fi
-		CHAIN_TEST_F=`$IPT -n -L pam_shield_FORWARD 2>/dev/null`
-		if [ -z "$CHAIN_TEST_F" ]
-		then
-			"$IPT" -N pam_shield_FORWARD
-			"$IPT" -I FORWARD -j pam_shield_FORWARD
-		fi
-		CHAIN_TEST_O=`$IPT -n -L pam_shield_OUTPUT 2>/dev/null`
-		if [ -z "$CHAIN_TEST_O" ]
-		then
-			"$IPT" -N pam_shield_OUTPUT
-			"$IPT" -I OUTPUT -j pam_shield_OUTPUT
-		fi
-	else
-		TASK="-D"
 	fi
+#
+#	CUSTOMIZE THIS RULE if you want to
+#
+#	$TASK is the iptables command: -A/-I or -D
+#	$2 is the IP number
+#
+#	* put in the correct chain name (pam_shield or INPUT)
+#	* put in the correct network interface name (e.g. -i eth0)
+#         Currently blocks on all interfaces
+#	* put in a port number (e.g.--destination-port 22 for ssh only) 
+#         Currently blocks all ports
+#	* add additional rules for additional services as needed
+#
+
+	"$IPT" "$TASK" pam_shield_INPUT -s "$2" -j REJECT
+	"$IPT" "$TASK" pam_shield_FORWARD -s "$2" -j REJECT
+	"$IPT" "$TASK" pam_shield_FORWARD -d "$2" -j REJECT
+	"$IPT" "$TASK" pam_shield_OUTPUT -d "$2" -j REJECT
+
+    if [ "$1" != "-D" ]
+	then
+	mail -s "[security] pam_shield blocked $2" root <<EOF
+Another monkey kept off our backs ...
+EOF
+	else
+	mail -s "[security] pam_shield unblocked $2" root <<EOF
+Another monkey set lose ...
+EOF
+	fi
+}
 
 #
 #	CUSTOMIZE THIS RULE if you want to
