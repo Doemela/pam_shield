@@ -93,32 +93,6 @@ Another monkey set lose ...
 EOF
 	fi
 }
-
-#
-#	CUSTOMIZE THIS RULE if you want to
-#
-#	$TASK is the iptables command: -A/-I or -D
-#	$2 is the IP number
-#
-#	* put in the correct chain name (pam_shield or INPUT)
-#	* put in the correct network interface name (e.g. -i eth0)
-#         Currently blocks on all interfaces
-#	* put in a port number (e.g.--destination-port 22 for ssh only) 
-#         Currently blocks all ports
-#	* add additional rules for additional services as needed
-#
-
-	"$IPT" "$TASK" pam_shield_INPUT -s "$2" -j DROP
-	"$IPT" "$TASK" pam_shield_FORWARD -s "$2" -j DROP
-	"$IPT" "$TASK" pam_shield_FORWARD -d "$2" -j DROP
-	"$IPT" "$TASK" pam_shield_OUTPUT -d "$2" -j DROP
-
-#	mail -s "[security] pam_shield blocked $2" root <<EOF
-#Another monkey kept off our backs ...
-#EOF
-}
-
-
 ### usually no editing is needed beyond this point ###
 
 
